@@ -22,6 +22,8 @@
 
 html {
   overscroll-behavior-y: contain;
+  /* build 8: ~12.5% larger base so all rem-based UI text scales up */
+  font-size: 112.5%;
 }
 
 body {
@@ -125,7 +127,7 @@ h3.section-title {
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 16px;
+  font-size: 18px;
   border-radius: 0;
 }
 
@@ -134,7 +136,7 @@ h3.section-title {
 }
 
 .amount-field {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -419,28 +421,28 @@ textarea.field {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .big-balance .dollar {
-  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-size: clamp(2rem, 8vw, 2.4rem);
   margin-right: 0.05em;
 }
 
 .big-balance .whole {
-  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-size: clamp(3.6rem, 18vw, 5.25rem);
 }
 
 .big-balance .cents {
-  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  font-size: clamp(1.6rem, 6.5vw, 2rem);
   opacity: 0.85;
 }
 
 .big-balance .minus {
-  font-size: clamp(2.5rem, 12vw, 3.5rem);
+  font-size: clamp(3rem, 14vw, 4rem);
   color: var(--negative);
   margin-right: 0.05em;
 }
@@ -560,7 +562,7 @@ textarea.field {
 }
 
 .lr-tag {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   letter-spacing: 0.1em;
   font-weight: 700;
   text-transform: uppercase;
@@ -582,7 +584,7 @@ textarea.field {
 }
 
 .tiny-tag {
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   letter-spacing: 0.06em;
   border: 1px solid var(--muted);
   padding: 0.1rem 0.3rem;
@@ -597,7 +599,8 @@ textarea.field {
 }
 
 .lr-amt {
-  font-weight: 600;
+  font-size: 1.15rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -610,7 +613,7 @@ textarea.field {
 }
 
 .lr-run {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
