@@ -10,7 +10,7 @@ export function SignIn({ busy, error, onSignIn }: Props) {
       <header className="frame">
         <p className="eyebrow">FAMILY BANK</p>
         <h1>Family Bank</h1>
-        <p className="sub">Build 12</p>
+        <p className="sub">Build 13</p>
       </header>
       <section className="frame">
         {error && (

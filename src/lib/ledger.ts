@@ -194,7 +194,13 @@ export function dateHeaderLabel(ymd: string): string {
 export function canReverse(tx: EnrichedTx, all: EnrichedTx[]): boolean {
   if (!tx.id) return false
   if (tx.status.includes("added")) return false
+  // Reversals are final (Reverses column, or app auto-note "Reversal of T-…").
+  if (tx.reverses) return false
+  if (/^\s*reversal of\s+T-[A-Z0-9]+\s*$/i.test((tx.note.split("\n")[0] || ""))) {
+    return false
+  }
   if (all.some((r) => r.reverses === tx.id)) return false
+  // Also treat Sheet rows that point at this id via reverse-of-note as already-final sources only on the reversing row above.
   return true
 }
 

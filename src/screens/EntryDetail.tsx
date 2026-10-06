@@ -1,6 +1,6 @@
 import type { EnrichedTx } from "../lib/ledger"
 import { canReverse, formatMoneySigned } from "../lib/ledger"
-import { describeTx, isAutoReversalNote, reversedIdOf } from "../lib/display"
+import { describeTx, isAutoReversalNote, isReversalRow, reversedIdOf } from "../lib/display"
 
 type Props = {
   tx: EnrichedTx
@@ -62,6 +62,9 @@ export function EntryDetail({
 
       {tx.status.includes("added") && (
         <p className="hint">Correct this in the Sheet.</p>
+      )}
+      {isReversalRow(tx) && (
+        <p className="hint">Reversals are final.</p>
       )}
 
       <div className="related">

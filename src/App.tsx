@@ -12,6 +12,7 @@ import {
 import {
   balanceForKid,
   enrichTransactions,
+  canReverse,
   oppositeType,
   type EnrichedTx,
 } from "./lib/ledger"
@@ -53,7 +54,7 @@ type Auth =
   | { kind: "signed-in"; clientId: string; email: string; token: string }
   | { kind: "error"; clientId?: string; message: string }
 
-const BUILD = 12
+const BUILD = 13
 
 export default function App() {
   const [auth, setAuth] = useState<Auth>({ kind: "boot" })
@@ -447,6 +448,7 @@ export default function App() {
 
   async function handleReverse(tx: EnrichedTx, note?: string) {
     if (!sheetId || !activeKid) return
+    if (!canReverse(tx, enriched)) return
     setBusy(true)
     try {
       await withWrite((token, email) =>
@@ -479,6 +481,7 @@ export default function App() {
     },
   ) {
     if (!sheetId || !activeKid) throw new Error("No kid")
+    if (!canReverse(original, enriched)) throw new Error("This entry can't be corrected")
     setBusy(true)
     try {
       await withWrite(async (token, email) => {
