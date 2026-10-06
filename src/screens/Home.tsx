@@ -6,6 +6,7 @@ import {
   ledgerForKid,
   type EnrichedTx,
 } from "../lib/ledger"
+import { isReversalRow, reversalNoteLine } from "../lib/display"
 import type { Kid } from "../lib/types"
 
 type Props = {
@@ -255,13 +256,15 @@ export function Home({
           const showHeader = i === 0 || r.date !== ledger[i - 1]!.date
           const labels = statusLabels(r)
           const isRev = r.status.includes("reversed")
-          const title =
-            r.reverses
-              ? `Reversal of ${r.note.replace(/^Reversal of\s*/i, "") || r.reverses}`
-              : r.type === "Deposit"
-                ? r.tag || "DEPOSIT"
-                : "EXPENSE"
-          const noteLine = r.note.split("\n")[0] || ""
+          const reversal = isReversalRow(r)
+          const title = reversal
+            ? "REVERSAL"
+            : r.type === "Deposit"
+              ? r.tag || "DEPOSIT"
+              : "EXPENSE"
+          const noteLine = reversal
+            ? reversalNoteLine(r, rows)
+            : r.note.split("\n")[0] || ""
           const signed =
             r.type === "Deposit" ? r.amount : -r.amount
           return (

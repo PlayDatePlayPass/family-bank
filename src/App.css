@@ -397,17 +397,6 @@ textarea.field {
   cursor: default;
 }
 
-.kid-name-btn:not(.static):active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
-
-.kid-name-btn:focus-visible,
-.icon-btn:focus-visible,
-.kid-picker-row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .kid-name-text {
   min-width: 0;
   overflow: hidden;
@@ -440,10 +429,6 @@ textarea.field {
 .gear-btn {
   margin-left: auto;
   margin-right: -0.5rem;
-}
-
-.icon-btn:active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 /* Kid picker sheet */
@@ -501,10 +486,6 @@ textarea.field {
   border-bottom: none;
 }
 
-.kid-picker-row:active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
-
 .kid-swatch {
   width: 22px;
   height: 22px;
@@ -548,9 +529,10 @@ textarea.field {
 }
 
 .balance-frame {
-  margin: 0.5rem 0 1rem;
-  padding: 1.25rem 1rem;
-  min-height: 30vh;
+  /* build 12: shorter frame (was 30vh, now ~20vh) so more ledger shows above the fold; number size unchanged */
+  margin: 0.4rem 0 0.85rem;
+  padding: 0.85rem 1rem;
+  min-height: max(8.5rem, 20vh);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -667,10 +649,6 @@ textarea.field {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
-}
-
-.action-rect:active {
-  filter: brightness(1.15);
 }
 
 .action-rect:disabled {
@@ -969,4 +947,95 @@ textarea.field {
 
 a.btn {
   display: block;
+}
+
+/* ------------------------------------------------------------------
+   Build 12: press feedback + keyboard focus
+   Outline/transparent controls get a ~15% accent tint; filled controls
+   darken and nudge down 1px. iOS needs a touchstart listener (main.tsx)
+   for :active to fire.
+   ------------------------------------------------------------------ */
+.action-rect,
+.btn,
+.ledger-row,
+.chip,
+.text-btn,
+.kid-name-btn,
+.icon-btn,
+.kid-picker-row {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 80ms ease-out,
+    filter 80ms ease-out,
+    transform 80ms ease-out;
+}
+
+/* outline / transparent */
+.action-rect:not(.primary):not(:disabled):active,
+.btn.ghost:not(:disabled):active,
+.btn.outline:not(:disabled):active,
+.ledger-row:active,
+.chip:not(.on):active,
+.text-btn:not(:disabled):active,
+.kid-name-btn:not(.static):active,
+.icon-btn:active,
+.kid-picker-row:active {
+  background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+/* filled */
+.action-rect.primary:not(:disabled):active,
+.btn:not(.ghost):not(.outline):not(:disabled):active,
+.chip.on:active {
+  filter: brightness(0.88);
+  transform: translateY(1px);
+}
+
+.action-rect:not(.primary):not(:disabled):active,
+.btn.ghost:not(:disabled):active,
+.btn.outline:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* keyboard focus */
+.btn:focus-visible,
+.chip:focus-visible,
+.text-btn:focus-visible,
+.kid-name-btn:focus-visible,
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* clip-path / full-bleed rows would clip an outside outline, so draw it inside */
+.action-rect:focus-visible,
+.ledger-row:focus-visible,
+.kid-picker-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.action-rect.primary:focus-visible,
+.btn:not(.ghost):not(.outline):focus-visible,
+.chip.on:focus-visible {
+  outline-color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-rect,
+  .btn,
+  .ledger-row,
+  .chip,
+  .text-btn,
+  .kid-name-btn,
+  .icon-btn,
+  .kid-picker-row {
+    transition: background-color 80ms ease-out, filter 80ms ease-out;
+  }
+
+  .action-rect:active,
+  .btn:active,
+  .chip:active {
+    transform: none !important;
+  }
 }

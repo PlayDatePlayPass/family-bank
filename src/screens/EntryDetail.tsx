@@ -1,5 +1,6 @@
 import type { EnrichedTx } from "../lib/ledger"
 import { canReverse, formatMoneySigned } from "../lib/ledger"
+import { describeTx, isAutoReversalNote, reversedIdOf } from "../lib/display"
 
 type Props = {
   tx: EnrichedTx
@@ -24,6 +25,12 @@ export function EntryDetail({
   const reversedBy = all.find((r) => r.reverses === tx.id)
   const corrects = tx.corrects
   const correctedBy = all.find((r) => r.corrects === tx.id)
+  const reversesId = reversedIdOf(tx)
+  // Auto-written "Reversal of <id>" notes are shown as a readable summary instead
+  const noteText =
+    reversesId && isAutoReversalNote(tx.note)
+      ? `Reversal of ${describeTx(reversesId, all)}`
+      : tx.note || "—"
 
   return (
     <div className="overlay-sheet">
@@ -44,7 +51,7 @@ export function EntryDetail({
         <dt>Amount</dt>
         <dd>{formatMoneySigned(tx.type === "Deposit" ? tx.amount : -tx.amount, true)}</dd>
         <dt>Note</dt>
-        <dd className="wrap">{tx.note || "—"}</dd>
+        <dd className="wrap">{noteText}</dd>
         <dt>Entered By</dt>
         <dd>{tx.enteredBy || "—"}</dd>
         <dt>Entered At</dt>
@@ -58,24 +65,24 @@ export function EntryDetail({
       )}
 
       <div className="related">
-        {tx.reverses && (
-          <button type="button" className="text-btn" onClick={() => onOpenRelated(tx.reverses)}>
-            Reverses {tx.reverses}
+        {reversesId && (tx.reverses || all.some((r) => r.id === reversesId)) && (
+          <button type="button" className="text-btn" onClick={() => onOpenRelated(reversesId)}>
+            Reverses: {describeTx(reversesId, all)}
           </button>
         )}
         {reversedBy && (
           <button type="button" className="text-btn" onClick={() => onOpenRelated(reversedBy.id)}>
-            Reversed by {reversedBy.id}
+            Reversed by: {describeTx(reversedBy.id, all)}
           </button>
         )}
         {corrects && (
           <button type="button" className="text-btn" onClick={() => onOpenRelated(corrects)}>
-            Corrects {corrects}
+            Corrects: {describeTx(corrects, all)}
           </button>
         )}
         {correctedBy && (
           <button type="button" className="text-btn" onClick={() => onOpenRelated(correctedBy.id)}>
-            Corrected by {correctedBy.id}
+            Corrected by: {describeTx(correctedBy.id, all)}
           </button>
         )}
       </div>
