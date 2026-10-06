@@ -227,24 +227,58 @@ export async function createFamilyBankSheet(
     sheetIds[s.properties.title] = s.properties.sheetId
   }
 
-  const balLambda =
-    'LAMBDA(id,name,SUMIFS(Transactions!G:G,Transactions!C:C,id,Transactions!E:E,"Deposit")' +
-    '+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,name,Transactions!E:E,"Deposit")' +
-    '-SUMIFS(Transactions!G:G,Transactions!C:C,id,Transactions!E:E,"Expense")' +
-    '-SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,name,Transactions!E:E,"Expense"))'
+  function balanceFormula(row: number): string {
+    // Per-kid SUMIFS: by Kid ID, plus blank-ID rows matched by name on this Summary row.
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Deposit")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Deposit")` +
+      `-SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Expense")` +
+      `-SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Expense"))`
+    )
+  }
 
-  const inLambda =
-    'LAMBDA(id,name,SUMIFS(Transactions!G:G,Transactions!C:C,id,Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")' +
-    '+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,name,Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))'
+  function monthInFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))`
+    )
+  }
 
-  const outLambda =
-    'LAMBDA(id,name,SUMIFS(Transactions!G:G,Transactions!C:C,id,Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")' +
-    '+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,name,Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))'
+  function monthOutFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))`
+    )
+  }
 
-  const lastLambda =
-    'LAMBDA(id,name,IFERROR(MAX(FILTER(Transactions!B:B,(Transactions!C:C=id)+((Transactions!C:C="")*(Transactions!D:D=name)))),""))'
+  function lastEntryFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",IFERROR(MAX(FILTER(Transactions!B:B,(Transactions!C:C=A${row})+((Transactions!C:C="")*(Transactions!D:D=B${row})))),""))`
+    )
+  }
+
+  function summaryKidRows(): string[][] {
+    const rows: string[][] = []
+    for (let i = 0; i < 20; i++) {
+      const r = 4 + i
+      const n = i + 1
+      rows.push([
+        `=IFERROR(INDEX(FILTER(Kids!A2:A,Kids!A2:A<>""),${n}),"")`,
+        `=IF(A${r}="","",IFERROR(XLOOKUP(A${r},Kids!A:A,Kids!B:B),""))`,
+        balanceFormula(r),
+        monthInFormula(r),
+        monthOutFormula(r),
+        lastEntryFormula(r),
+      ])
+    }
+    return rows
+  }
 
   // Seed values
+
   await sheetsJson(token, `spreadsheets/${id}/values:batchUpdate`, {
     method: "POST",
     body: JSON.stringify({
@@ -263,24 +297,7 @@ export async function createFamilyBankSheet(
               "Out this month",
               "Last entry",
             ],
-            [
-              '=IFERROR(FILTER(Kids!A2:A,Kids!A2:A<>""),"")',
-              '=IFERROR(MAP(A4:A,LAMBDA(id,IF(id="","",XLOOKUP(id,Kids!A:A,Kids!B:B)))),"")',
-              `=IFERROR(MAP(A4:A,B4:B,${balLambda}),"")`,
-              `=IFERROR(MAP(A4:A,B4:B,${inLambda}),"")`,
-              `=IFERROR(MAP(A4:A,B4:B,${outLambda}),"")`,
-              `=IFERROR(MAP(A4:A,B4:B,${lastLambda}),"")`,
-            ],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+            ...summaryKidRows(),
             [],
             ["Recent activity"],
             [
@@ -375,9 +392,9 @@ export async function createFamilyBankSheet(
             range: {
               sheetId: summaryId,
               startRowIndex: 3,
-              endRowIndex: 4,
+              endRowIndex: 23,
               startColumnIndex: 2,
-              endColumnIndex: 3,
+              endColumnIndex: 5,
             },
             cell: {
               userEnteredFormat: {
@@ -576,6 +593,93 @@ export async function fixKidId(
     { method: "PUT", body: JSON.stringify({ values: [[kidId]] }) },
   )
   return kidId
+}
+
+
+/** Rewrite Summary A4:F23 formulas on an existing Family Bank sheet. */
+export async function repairSummaryFormulas(
+  token: string,
+  spreadsheetId: string,
+): Promise<void> {
+  function balanceFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Deposit")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Deposit")` +
+      `-SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Expense")` +
+      `-SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Expense"))`
+    )
+  }
+  function monthInFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Deposit",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))`
+    )
+  }
+  function monthOutFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",` +
+      `SUMIFS(Transactions!G:G,Transactions!C:C,A${row},Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction")` +
+      `+SUMIFS(Transactions!G:G,Transactions!C:C,"",Transactions!D:D,B${row},Transactions!E:E,"Expense",Transactions!B:B,">="&EOMONTH(TODAY(),-1)+1,Transactions!F:F,"<>Correction"))`
+    )
+  }
+  function lastEntryFormula(row: number): string {
+    return (
+      `=IF(A${row}="","",IFERROR(MAX(FILTER(Transactions!B:B,(Transactions!C:C=A${row})+((Transactions!C:C="")*(Transactions!D:D=B${row})))),""))`
+    )
+  }
+  const rows: string[][] = []
+  for (let i = 0; i < 20; i++) {
+    const r = 4 + i
+    const n = i + 1
+    rows.push([
+      `=IFERROR(INDEX(FILTER(Kids!A2:A,Kids!A2:A<>""),${n}),"")`,
+      `=IF(A${r}="","",IFERROR(XLOOKUP(A${r},Kids!A:A,Kids!B:B),""))`,
+      balanceFormula(r),
+      monthInFormula(r),
+      monthOutFormula(r),
+      lastEntryFormula(r),
+    ])
+  }
+  await sheetsJson(token, `spreadsheets/${spreadsheetId}/values:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({
+      valueInputOption: "USER_ENTERED",
+      data: [
+        {
+          range: "Summary!A1:F2",
+          values: [
+            ["Family Bank"],
+            ['="Updated "&TEXT(NOW(),"yyyy-mm-dd h:mm am/pm")'],
+          ],
+        },
+        {
+          range: "Summary!A3:F3",
+          values: [
+            [
+              "Kid ID",
+              "Kid",
+              "Balance",
+              "In this month",
+              "Out this month",
+              "Last entry",
+            ],
+          ],
+        },
+        { range: "Summary!A4:F23", values: rows },
+        {
+          range: "Summary!A25",
+          values: [
+            ["Recent activity"],
+            [
+              '=IFERROR(QUERY(Transactions!A:L,"select B,D,E,F,G,H where B is not null order by L desc limit 15",1),"")',
+            ],
+          ],
+        },
+      ],
+    }),
+  })
 }
 
 export async function appendTag(

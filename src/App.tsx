@@ -25,6 +25,7 @@ import {
   appendTag,
   appendTransaction,
   createFamilyBankSheet,
+  repairSummaryFormulas,
   fixKidId,
   readBankData,
   sheetUrl,
@@ -797,6 +798,17 @@ export default function App() {
               setBusy(true)
               try {
                 await withWrite((token) => fixKidId(token, sheetId, kid.rowIndex))
+                await refreshData()
+              } finally {
+                setBusy(false)
+              }
+            }}
+            onRepairSummary={async () => {
+              setBusy(true)
+              try {
+                await withWrite((token) =>
+                  repairSummaryFormulas(token, sheetId),
+                )
                 await refreshData()
               } finally {
                 setBusy(false)

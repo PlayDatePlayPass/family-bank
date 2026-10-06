@@ -21,6 +21,7 @@ type Props = {
   ) => Promise<void>
   onAddTag: (tag: string) => Promise<void>
   onFixKidId: (kid: Kid) => Promise<void>
+  onRepairSummary: () => Promise<void>
 }
 
 export function Settings({
@@ -35,6 +36,7 @@ export function Settings({
   onUpdateKid,
   onAddTag,
   onFixKidId,
+  onRepairSummary,
 }: Props) {
   const [editing, setEditing] = useState<string | null>(null)
   const [newTag, setNewTag] = useState("")
@@ -144,6 +146,22 @@ export function Settings({
       </div>
 
       <h3 className="section-title">Sheet</h3>
+      <button
+        type="button"
+        className="btn outline"
+        disabled={!online || busy}
+        onClick={async () => {
+          setErr(null)
+          try {
+            await onRepairSummary()
+          } catch (e) {
+            setErr(e instanceof Error ? e.message : "Repair failed")
+          }
+        }}
+      >
+        Repair Summary totals
+      </button>
+
       <a
         className="btn outline"
         href={data.spreadsheetUrl}
@@ -176,7 +194,7 @@ export function Settings({
       </button>
 
       {err && <p className="err-msg">{err}</p>}
-      <p className="foot">Build 6</p>
+      <p className="foot">Build 7</p>
     </div>
   )
 }
