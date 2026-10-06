@@ -132,7 +132,7 @@ export default function App() {
         <p className="sub">
           Day-one gate: Google sign-in + Sheets from a home-screen icon.
         </p>
-        <p className="sub">Build 4 — if you don’t see this line, you’re on a cached copy.</p>
+        <p className="sub">Build 5 — if you don’t see this line, you’re on a cached copy.</p>
       </header>
 
       <section className="frame meta">
