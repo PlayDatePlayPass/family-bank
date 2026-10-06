@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>Family Bank · refresh to build 9</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 28rem; margin: auto; line-height: 1.4; }
+      a { font-size: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <p>Clearing old Family Bank cache…</p>
+    <p id="status">Working</p>
+    <p><a id="go" href="./?v=9">Open Build 9</a></p>
+    <script>
+      (async () => {
+        const status = document.getElementById("status")
+        try {
+          if ("serviceWorker" in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations()
+            await Promise.all(regs.map((r) => r.unregister()))
+            status.textContent = "Removed " + regs.length + " service worker(s)."
+          }
+          if (window.caches) {
+            const keys = await caches.keys()
+            await Promise.all(keys.map((k) => caches.delete(k)))
+            status.textContent += " Cleared " + keys.length + " cache(s)."
+          }
+        } catch (e) {
+          status.textContent = "Partial clear: " + (e && e.message ? e.message : e)
+        }
+        location.replace("./?v=9&fresh=" + Date.now())
+      })()
+    </script>
+  </body>
+</html>
