@@ -77,14 +77,11 @@ export default function App() {
     }
   }, [])
 
-  async function signIn(clientId: string, forceConsent = false) {
+  async function signIn(clientId: string, _forceConsent = false) {
     setBusy(true)
     setProbeResult(null)
     try {
-      const token = await requestAccessToken(
-        clientId,
-        forceConsent ? "consent" : "",
-      )
+      const token = await requestAccessToken(clientId, "consent")
       const email = await fetchUserEmail(token)
       setStatus({ kind: "signed-in", clientId, email, token })
     } catch (e) {
@@ -135,6 +132,7 @@ export default function App() {
         <p className="sub">
           Day-one gate: Google sign-in + Sheets from a home-screen icon.
         </p>
+        <p className="sub">Build 3 — if you don’t see this line, you’re on a cached copy.</p>
       </header>
 
       <section className="frame meta">
