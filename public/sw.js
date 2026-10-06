@@ -1,5 +1,5 @@
-/* family-bank build 9 */
-const BUILD = 9
+/* family-bank build 10 */
+const BUILD = 10
 self.addEventListener("install", (e) => {
   self.skipWaiting()
 })

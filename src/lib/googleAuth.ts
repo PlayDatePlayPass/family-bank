@@ -34,6 +34,7 @@ export type TokenResponse = {
 const TOKEN_KEY = "family-bank-token"
 const EMAIL_KEY = "family-bank-email"
 const EXPIRES_KEY = "family-bank-token-expires"
+const WAS_SIGNED_IN_KEY = "family-bank-was-signed-in"
 
 export async function loadConfig(): Promise<AppConfig> {
   const res = await fetch(`${import.meta.env.BASE_URL}config.json`, {
@@ -47,17 +48,26 @@ export function loadStoredAuth(): {
   accessToken: string | null
   email: string | null
   expiresAt: number | null
+  wasSignedIn: boolean
 } {
   return {
     accessToken: localStorage.getItem(TOKEN_KEY),
     email: localStorage.getItem(EMAIL_KEY),
     expiresAt: Number(localStorage.getItem(EXPIRES_KEY) || 0) || null,
+    wasSignedIn: localStorage.getItem(WAS_SIGNED_IN_KEY) === "1",
   }
 }
 
 export function clearStoredAuth(): void {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(EMAIL_KEY)
+  localStorage.removeItem(EXPIRES_KEY)
+  localStorage.removeItem(WAS_SIGNED_IN_KEY)
+}
+
+/** Drop the access token but keep email / wasSignedIn for silent renew. */
+export function clearAccessToken(): void {
+  localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(EXPIRES_KEY)
 }
 
@@ -67,6 +77,7 @@ function storeToken(token: string, expiresIn: number) {
     EXPIRES_KEY,
     String(Date.now() + Math.max(0, expiresIn - 60) * 1000),
   )
+  localStorage.setItem(WAS_SIGNED_IN_KEY, "1")
 }
 
 export function waitForGoogle(timeoutMs = 15000): Promise<void> {
@@ -114,6 +125,23 @@ export async function requestAccessToken(
     })
     client.requestAccessToken({ prompt })
   })
+}
+
+/** Silent renew first; fall back to consent when silent fails or scopes never granted. */
+export async function obtainAccessToken(
+  clientId: string,
+  opts?: { preferConsent?: boolean },
+): Promise<string> {
+  const stored = loadStoredAuth()
+  const neverGranted = !stored.wasSignedIn && !stored.email
+  if (opts?.preferConsent || neverGranted) {
+    return requestAccessToken(clientId, "consent")
+  }
+  try {
+    return await requestAccessToken(clientId, "")
+  } catch {
+    return requestAccessToken(clientId, "consent")
+  }
 }
 
 export async function fetchUserEmail(accessToken: string): Promise<string> {

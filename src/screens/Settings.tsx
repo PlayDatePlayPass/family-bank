@@ -194,7 +194,7 @@ export function Settings({
       </button>
 
       {err && <p className="err-msg">{err}</p>}
-      <p className="foot">Build 9</p>
+      <p className="foot">Build 10</p>
     </div>
   )
 }

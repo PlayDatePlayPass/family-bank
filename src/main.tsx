@@ -9,7 +9,7 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 )
 
-const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=9`
+const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=10`
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

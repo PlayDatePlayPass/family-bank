@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { OfflineBanner } from "./components/OfflineBanner"
 import {
+  clearAccessToken,
   clearStoredAuth,
   fetchUserEmail,
   loadConfig,
   loadStoredAuth,
+  obtainAccessToken,
   requestAccessToken,
 } from "./lib/googleAuth"
 import {
@@ -51,7 +53,7 @@ type Auth =
   | { kind: "signed-in"; clientId: string; email: string; token: string }
   | { kind: "error"; clientId?: string; message: string }
 
-const BUILD = 9
+const BUILD = 10
 
 export default function App() {
   const [auth, setAuth] = useState<Auth>({ kind: "boot" })
@@ -84,7 +86,7 @@ export default function App() {
     }
   }, [])
 
-  // boot config + stored auth
+  // boot config + stored auth (silent renew when token expired)
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -95,6 +97,7 @@ export default function App() {
           setAuth({ kind: "need-config" })
           return
         }
+        const clientId = cfg.googleClientId
         const stored = loadStoredAuth()
         if (
           stored.accessToken &&
@@ -104,13 +107,28 @@ export default function App() {
         ) {
           setAuth({
             kind: "signed-in",
-            clientId: cfg.googleClientId,
+            clientId,
             email: stored.email,
             token: stored.accessToken,
           })
           return
         }
-        setAuth({ kind: "signed-out", clientId: cfg.googleClientId })
+        if (stored.email || stored.wasSignedIn) {
+          try {
+            const token = await requestAccessToken(clientId, "")
+            if (cancelled) return
+            const email = await fetchUserEmail(token)
+            if (cancelled) return
+            setAuth({ kind: "signed-in", clientId, email, token })
+            return
+          } catch {
+            if (cancelled) return
+            clearAccessToken()
+            setAuth({ kind: "signed-out", clientId })
+            return
+          }
+        }
+        setAuth({ kind: "signed-out", clientId })
       } catch (e) {
         if (!cancelled) {
           setAuth({
@@ -147,7 +165,7 @@ export default function App() {
           (auth.kind === "signed-in" ? auth.email : await fetchUserEmail(stored.accessToken))
         return { token: stored.accessToken, email, clientId }
       }
-      const token = await requestAccessToken(clientId, force ? "consent" : "")
+      const token = await obtainAccessToken(clientId)
       const email = await fetchUserEmail(token)
       setAuth({ kind: "signed-in", clientId, email, token })
       return { token, email, clientId }
@@ -198,6 +216,39 @@ export default function App() {
     },
     [sheetId, getToken, activeKidId],
   )
+
+
+  // proactive silent token refresh ~3 min before expiry
+  useEffect(() => {
+    if (auth.kind !== "signed-in") return
+    const clientId = auth.clientId
+    let timer: number | undefined
+    let cancelled = false
+
+    const schedule = () => {
+      const stored = loadStoredAuth()
+      if (!stored.expiresAt) return
+      const refreshIn = stored.expiresAt - Date.now() - 3 * 60 * 1000
+      const delay = Math.max(5_000, refreshIn)
+      timer = window.setTimeout(async () => {
+        try {
+          const token = await requestAccessToken(clientId, "")
+          if (cancelled) return
+          const email = await fetchUserEmail(token)
+          if (cancelled) return
+          setAuth({ kind: "signed-in", clientId, email, token })
+        } catch {
+          // leave current session; next API call / getToken will recover
+        }
+      }, delay)
+    }
+
+    schedule()
+    return () => {
+      cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
+    }
+  }, [auth])
 
   // load sheet when signed in
   useEffect(() => {
@@ -261,7 +312,7 @@ export default function App() {
     setBusy(true)
     setSignInError(null)
     try {
-      const token = await requestAccessToken(clientId, "consent")
+      const token = await obtainAccessToken(clientId)
       const email = await fetchUserEmail(token)
       setAuth({ kind: "signed-in", clientId, email, token })
     } catch (e) {
