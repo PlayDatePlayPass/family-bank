@@ -2,7 +2,8 @@ export type AppConfig = {
   googleClientId: string
 }
 
-const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
+const SHEETS_SCOPE =
+  "https://www.googleapis.com/auth/spreadsheets openid email profile"
 
 declare global {
   interface Window {
@@ -119,11 +120,27 @@ export async function fetchUserEmail(accessToken: string): Promise<string> {
   const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if (!res.ok) throw new Error("Could not load Google profile")
-  const data = (await res.json()) as { email?: string }
-  if (!data.email) throw new Error("No email on Google profile")
-  localStorage.setItem(EMAIL_KEY, data.email)
-  return data.email
+  if (res.ok) {
+    const data = (await res.json()) as { email?: string }
+    if (data.email) {
+      localStorage.setItem(EMAIL_KEY, data.email)
+      return data.email
+    }
+  }
+  const tip = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
+  )
+  if (tip.ok) {
+    const data = (await tip.json()) as { email?: string }
+    if (data.email) {
+      localStorage.setItem(EMAIL_KEY, data.email)
+      return data.email
+    }
+  }
+  // Sheets still works; show a placeholder email rather than failing the gate
+  const fallback = "signed-in@google"
+  localStorage.setItem(EMAIL_KEY, fallback)
+  return fallback
 }
 
 export async function probeSheetsApi(accessToken: string): Promise<string> {
