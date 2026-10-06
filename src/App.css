@@ -370,14 +370,181 @@ textarea.field {
   min-height: 2.5rem;
 }
 
-.kid-switcher {
-  display: flex;
+/* build 11: kid name switcher (top left) + gear (top right) */
+.kid-name-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 0.4rem;
-  flex-wrap: wrap;
+  min-height: 48px;
+  min-width: 0;
+  max-width: calc(100% - 56px);
+  margin: 0 0 0 -0.35rem;
+  padding: 0.25rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
 }
 
-.settings-link {
+.kid-name-btn.static {
+  cursor: default;
+}
+
+.kid-name-btn:not(.static):active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.kid-name-btn:focus-visible,
+.icon-btn:focus-visible,
+.kid-picker-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.kid-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kid-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--accent);
+  transform: translateY(1px);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.gear-btn {
   margin-left: auto;
+  margin-right: -0.5rem;
+}
+
+.icon-btn:active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* Kid picker sheet */
+.kid-picker-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  animation: fade-in 0.15s ease;
+}
+
+.kid-picker {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80dvh;
+  overflow: auto;
+  background: var(--bg);
+  border: var(--line-w) solid var(--line);
+  border-bottom: none;
+  padding: 0.85rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+  clip-path: polygon(0 14px, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  animation: sheet-up 0.18s ease;
+}
+
+.kid-picker-title {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.kid-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.5rem 0.25rem;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 35%, transparent);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kid-picker-row:last-child {
+  border-bottom: none;
+}
+
+.kid-picker-row:active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.kid-swatch {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+.kid-picker-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kid-picker-check {
+  display: inline-flex;
+  width: 24px;
+  justify-content: center;
+  color: var(--accent);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kid-picker-root,
+  .kid-picker {
+    animation: none;
+  }
 }
 
 .balance-frame {
@@ -421,7 +588,8 @@ textarea.field {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  font-weight: 800;
+  /* IBM Plex Sans tops out at 700; 800 was faux-bold */
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -460,16 +628,8 @@ textarea.field {
   background: var(--negative);
 }
 
-.kid-name-caps {
-  margin: 0.75rem 0 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .updated {
-  margin: 0.35rem 0 0;
+  margin: 0.75rem 0 0;
   font-size: 0.75rem;
 }
 
@@ -488,7 +648,8 @@ textarea.field {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  padding: 1rem 0.5rem;
+  min-height: 56px;
+  padding: 0.9rem 0.5rem;
   cursor: pointer;
   clip-path: polygon(
     0 8px,
@@ -500,6 +661,16 @@ textarea.field {
     8px 100%,
     0 calc(100% - 8px)
   );
+}
+
+.action-rect.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.action-rect:active {
+  filter: brightness(1.15);
 }
 
 .action-rect:disabled {
@@ -519,7 +690,7 @@ textarea.field {
 .date-bar {
   margin-top: 0.75rem;
   padding: 0.35rem 0.65rem;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.12em;
   font-weight: 700;
   color: var(--text);
@@ -537,6 +708,7 @@ textarea.field {
 
 .ledger-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
@@ -556,6 +728,7 @@ textarea.field {
 
 .lr-left {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
@@ -574,7 +747,7 @@ textarea.field {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 220px;
+  min-width: 0;
 }
 
 .lr-labels {
@@ -584,7 +757,7 @@ textarea.field {
 }
 
 .tiny-tag {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   letter-spacing: 0.06em;
   border: 1px solid var(--muted);
   padding: 0.1rem 0.3rem;
@@ -604,8 +777,17 @@ textarea.field {
   font-variant-numeric: tabular-nums;
 }
 
+/* build 11: amounts never use the accent; red is reserved for balance < 0 */
 .lr-amt.pos {
-  color: var(--accent);
+  color: var(--text);
+}
+
+.lr-amt.neg {
+  color: var(--muted);
+}
+
+.lr-run.below-zero {
+  color: var(--negative);
 }
 
 .lr-amt.strike {
@@ -617,11 +799,22 @@ textarea.field {
   color: var(--muted);
 }
 
+/* build 11: overlays content instead of pushing it down (no layout shift) */
 .pull-hint {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 0.25rem;
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 0.5rem);
+  left: 50%;
+  z-index: 30;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--surface);
+  border: var(--line-w) solid var(--line);
+  padding: 0.4rem 0.85rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 /* Overlays */
