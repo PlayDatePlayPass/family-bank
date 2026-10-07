@@ -8,7 +8,7 @@ import "@fontsource/ibm-plex-sans/latin-700.css"
 import "./index.css"
 import App from "./App.tsx"
 
-// build 13: iOS Safari only fires :active on elements when a touchstart listener exists
+// build 14: iOS Safari only fires :active on elements when a touchstart listener exists
 document.addEventListener("touchstart", () => {}, { passive: true })
 
 createRoot(document.getElementById("root")!).render(
@@ -17,7 +17,7 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 )
 
-const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=13`
+const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=14`
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
