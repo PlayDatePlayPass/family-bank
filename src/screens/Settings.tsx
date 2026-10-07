@@ -186,7 +186,7 @@ export function Settings({
       </a>
 
       {err && <p className="err-msg">{err}</p>}
-      <p className="foot">Build 16</p>
+      <p className="foot">Build 17</p>
     </div>
   )
 }

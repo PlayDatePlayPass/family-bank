@@ -53,7 +53,7 @@ type Auth =
   | { kind: "signed-in"; clientId: string; email: string; token: string }
   | { kind: "error"; clientId?: string; message: string }
 
-const BUILD = 16
+const BUILD = 17
 
 export default function App() {
   const [auth, setAuth] = useState<Auth>({ kind: "boot" })

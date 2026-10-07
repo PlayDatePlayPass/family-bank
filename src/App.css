@@ -1076,7 +1076,8 @@ a.btn {
 .text-btn,
 .kid-name-btn,
 .icon-btn,
-.kid-picker-row {
+.kid-picker-row,
+.settings-list-row {
   -webkit-tap-highlight-color: transparent;
   transition:
     background-color 80ms ease-out,
@@ -1093,7 +1094,8 @@ a.btn {
 .text-btn:not(:disabled):active,
 .kid-name-btn:not(.static):active,
 .icon-btn:active,
-.kid-picker-row:active {
+.kid-picker-row:active,
+.settings-list-row:not(:disabled):active {
   background-color: color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
@@ -1116,7 +1118,8 @@ a.btn {
 .chip:focus-visible,
 .text-btn:focus-visible,
 .kid-name-btn:focus-visible,
-.icon-btn:focus-visible {
+.icon-btn:focus-visible,
+.settings-list-row:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
