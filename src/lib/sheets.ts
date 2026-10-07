@@ -196,6 +196,7 @@ const SEED_TAGS: [string, string][] = [
   ["Deposit", "Cash"],
   ["Deposit", "Pay Day"],
   ["Deposit", "Gift"],
+  ["Deposit", "Gift Card"],
   ["Deposit", "Other"],
   ["Deposit", "Correction"],
   ["Expense", "Correction"],
@@ -695,6 +696,20 @@ export async function appendTag(
       body: JSON.stringify({ values: [["Deposit", tag.trim()]] }),
     },
   )
+}
+
+/** Quietly add Gift Card to Tags if an older sheet is missing it. */
+export async function ensureGiftCardTag(
+  token: string,
+  spreadsheetId: string,
+  tags: { type: string; tag: string }[],
+): Promise<boolean> {
+  const has = tags.some(
+    (t) => t.type === "Deposit" && t.tag.trim().toLowerCase() === "gift card",
+  )
+  if (has) return false
+  await appendTag(token, spreadsheetId, "Gift Card")
+  return true
 }
 
 export type NewEntry = {

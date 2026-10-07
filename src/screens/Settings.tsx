@@ -4,6 +4,7 @@ import {
   accentFromHue,
   hexToHue,
 } from "../lib/theme"
+import { depositTags } from "../lib/ledger"
 import type { BankData, Kid, ThemeFamily } from "../lib/types"
 
 type Props = {
@@ -13,15 +14,12 @@ type Props = {
   busy: boolean
   onClose: () => void
   onSignOut: () => void
-  onSwitchSheet: () => void
-  onAddKid: () => void
   onUpdateKid: (
     kid: Kid,
     fields: { name: string; color: string; theme: ThemeFamily },
   ) => Promise<void>
   onAddTag: (tag: string) => Promise<void>
   onFixKidId: (kid: Kid) => Promise<void>
-  onRepairSummary: () => Promise<void>
 }
 
 export function Settings({
@@ -31,16 +29,14 @@ export function Settings({
   busy,
   onClose,
   onSignOut,
-  onSwitchSheet,
-  onAddKid,
   onUpdateKid,
   onAddTag,
   onFixKidId,
-  onRepairSummary,
 }: Props) {
   const [editing, setEditing] = useState<string | null>(null)
   const [newTag, setNewTag] = useState("")
   const [err, setErr] = useState<string | null>(null)
+  const tagList = useMemo(() => depositTags(data.tags), [data.tags])
 
   return (
     <div className="overlay-sheet">
@@ -50,6 +46,8 @@ export function Settings({
           Close
         </button>
       </div>
+
+      <h1 className="bank-title">Slacter Family Bank</h1>
 
       <h3 className="section-title">Kids</h3>
       {data.kids.map((k) => {
@@ -108,22 +106,12 @@ export function Settings({
           </div>
         )
       })}
-      <button
-        type="button"
-        className="btn outline"
-        disabled={!online}
-        onClick={onAddKid}
-      >
-        Add kid
-      </button>
 
       <h3 className="section-title">Deposit tags</h3>
       <ul className="tag-list">
-        {data.tags
-          .filter((t) => t.type === "Deposit" && t.tag !== "Correction")
-          .map((t) => (
-            <li key={`${t.type}-${t.tag}`}>{t.tag}</li>
-          ))}
+        {tagList.map((t) => (
+          <li key={t}>{t}</li>
+        ))}
       </ul>
       <div className="row-input">
         <input
@@ -146,22 +134,6 @@ export function Settings({
       </div>
 
       <h3 className="section-title">Sheet</h3>
-      <button
-        type="button"
-        className="btn outline"
-        disabled={!online || busy}
-        onClick={async () => {
-          setErr(null)
-          try {
-            await onRepairSummary()
-          } catch (e) {
-            setErr(e instanceof Error ? e.message : "Repair failed")
-          }
-        }}
-      >
-        Repair Summary totals
-      </button>
-
       <a
         className="btn outline"
         href={data.spreadsheetUrl}
@@ -170,9 +142,6 @@ export function Settings({
       >
         Open in Google Sheets
       </a>
-      <button type="button" className="btn ghost" onClick={onSwitchSheet}>
-        Switch Sheet
-      </button>
 
       {data.issues.length > 0 && (
         <>
@@ -193,8 +162,12 @@ export function Settings({
         Sign out
       </button>
 
+      <a className="force-refresh-link" href="./force.html">
+        Force refresh
+      </a>
+
       {err && <p className="err-msg">{err}</p>}
-      <p className="foot">Build 14</p>
+      <p className="foot">Build 15</p>
     </div>
   )
 }

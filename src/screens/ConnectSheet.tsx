@@ -24,7 +24,7 @@ export function ConnectSheet({
       <header className="frame">
         <p className="eyebrow">FAMILY BANK</p>
         <h1>Connect Sheet</h1>
-        <p className="sub">Build 14 — one Google Sheet is the bank.</p>
+        <p className="sub">Build 15 — one Google Sheet is the bank.</p>
       </header>
 
       {createdUrl && (

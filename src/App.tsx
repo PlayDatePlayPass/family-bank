@@ -28,10 +28,9 @@ import {
   appendTag,
   appendTransaction,
   createFamilyBankSheet,
-  repairSummaryFormulas,
+  ensureGiftCardTag,
   fixKidId,
   readBankData,
-  sheetUrl,
   updateKidDisplay,
   validateFamilyBankSheet,
 } from "./lib/sheets"
@@ -54,7 +53,7 @@ type Auth =
   | { kind: "signed-in"; clientId: string; email: string; token: string }
   | { kind: "error"; clientId?: string; message: string }
 
-const BUILD = 14
+const BUILD = 15
 
 export default function App() {
   const [auth, setAuth] = useState<Auth>({ kind: "boot" })
@@ -182,16 +181,25 @@ export default function App() {
       try {
         const bank = await readBankData(token, sid)
         const { rows, issues } = enrichTransactions(bank.transactions, bank.kids)
-        setData({ ...bank, issues: [...bank.issues, ...issues].filter((v, i, a) =>
+        let nextBank = bank
+        try {
+          const added = await ensureGiftCardTag(token, sid, bank.tags)
+          if (added) {
+            nextBank = await readBankData(token, sid)
+          }
+        } catch {
+          // offline / no write — depositTags() still injects Gift Card in UI
+        }
+        setData({ ...nextBank, issues: [...nextBank.issues, ...issues].filter((v, i, a) =>
           a.findIndex((x) => x.kind === v.kind && x.rowIndex === v.rowIndex && x.message === v.message) === i,
         ) })
         setEnriched(rows)
         setUpdatedAt(new Date())
         setLoadError(null)
-        if (bank.kids.length) {
-          const still = bank.kids.find((k) => k.kidId === activeKidId)
+        if (nextBank.kids.length) {
+          const still = nextBank.kids.find((k) => k.kidId === activeKidId)
           if (!still) {
-            const next = bank.kids[0]!.kidId
+            const next = nextBank.kids[0]!.kidId
             setActiveKidId(next)
             saveActiveKidId(next)
           }
@@ -820,14 +828,6 @@ export default function App() {
             busy={busy}
             onClose={() => setOverlay({ kind: "none" })}
             onSignOut={signOut}
-            onSwitchSheet={() => {
-              clearSheetId()
-              setSheetId(null)
-              setData(null)
-              setOverlay({ kind: "none" })
-              setCreatedUrl(sheetUrl(sheetId))
-            }}
-            onAddKid={() => setOverlay({ kind: "open-account" })}
             onUpdateKid={async (kid, fields) => {
               setBusy(true)
               try {
@@ -852,17 +852,6 @@ export default function App() {
               setBusy(true)
               try {
                 await withWrite((token) => fixKidId(token, sheetId, kid.rowIndex))
-                await refreshData()
-              } finally {
-                setBusy(false)
-              }
-            }}
-            onRepairSummary={async () => {
-              setBusy(true)
-              try {
-                await withWrite((token) =>
-                  repairSummaryFormulas(token, sheetId),
-                )
                 await refreshData()
               } finally {
                 setBusy(false)

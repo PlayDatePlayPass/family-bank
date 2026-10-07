@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from "react"
 import { BigBalance } from "../components/Money"
 import {
+  balanceForKid,
   dateHeaderLabel,
   formatMoneySigned,
   ledgerForKid,
@@ -87,127 +88,67 @@ function statusLabels(r: EnrichedTx): string[] {
   return out
 }
 
-export function Home({
-  kid,
-  kids,
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  )
+}
+
+function KidPageBody({
+  pageKid,
   rows,
   balance,
   updatedAt,
   online,
   flashing,
-  onSelectKid,
+  multiKid,
+  onOpenPicker,
   onDeposit,
   onExpense,
   onOpenEntry,
   onSettings,
-  onRefresh,
-}: Props) {
-  const ledger = useMemo(() => ledgerForKid(rows, kid.kidId), [rows, kid.kidId])
-  const touchY = useRef<number | null>(null)
-  const [pull, setPull] = useState(0)
-  const [refreshing, setRefreshing] = useState(false)
-  const swipeX = useRef<number | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const pickerPushed = useRef(false)
-  const multiKid = kids.length > 1
-
-  // Android back closes the kid picker (same pushState/popstate pattern as App overlays)
-  useEffect(() => {
-    if (!pickerOpen) return
-    if (!pickerPushed.current) {
-      history.pushState({ fbKidPicker: true }, "")
-      pickerPushed.current = true
-    }
-    const onPop = () => {
-      pickerPushed.current = false
-      setPickerOpen(false)
-    }
-    window.addEventListener("popstate", onPop)
-    return () => window.removeEventListener("popstate", onPop)
-  }, [pickerOpen])
-
-  const closePicker = useCallback(() => {
-    if (pickerPushed.current) {
-      // pops our history entry; popstate handler closes the sheet
-      history.back()
-    } else {
-      setPickerOpen(false)
-    }
-  }, [])
-
+}: {
+  pageKid: Kid
+  rows: EnrichedTx[]
+  balance: number
+  updatedAt: Date | null
+  online: boolean
+  flashing: boolean
+  multiKid: boolean
+  onOpenPicker: () => void
+  onDeposit: () => void
+  onExpense: () => void
+  onOpenEntry: (txId: string) => void
+  onSettings: () => void
+}) {
+  const ledger = useMemo(
+    () => ledgerForKid(rows, pageKid.kidId),
+    [rows, pageKid.kidId],
+  )
   const updatedLabel = updatedAt
     ? `Updated ${updatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
     : ""
 
   return (
-    <div
-      className="home"
-      onTouchStart={(e) => {
-        if (pickerOpen) return
-        touchY.current = e.touches[0]?.clientY ?? null
-        swipeX.current = e.touches[0]?.clientX ?? null
-      }}
-      onTouchMove={(e) => {
-        if (pickerOpen) return
-        const y = e.touches[0]?.clientY
-        if (touchY.current != null && y != null && window.scrollY <= 0) {
-          const dy = y - touchY.current
-          if (dy > 0) setPull(Math.min(72, dy * 0.4))
-        }
-      }}
-      onTouchEnd={async (e) => {
-        if (pickerOpen) return
-        if (pull > 48 && !refreshing) {
-          setRefreshing(true)
-          try {
-            await onRefresh()
-          } finally {
-            setRefreshing(false)
-          }
-        }
-        setPull(0)
-        touchY.current = null
-
-        const x = e.changedTouches[0]?.clientX
-        if (swipeX.current != null && x != null && kids.length > 1) {
-          const dx = x - swipeX.current
-          if (Math.abs(dx) > 60) {
-            const idx = kids.findIndex((k) => k.kidId === kid.kidId)
-            if (dx < 0 && idx < kids.length - 1) onSelectKid(kids[idx + 1]!.kidId)
-            if (dx > 0 && idx > 0) onSelectKid(kids[idx - 1]!.kidId)
-          }
-        }
-        swipeX.current = null
-      }}
-    >
-      {(pull > 0 || refreshing) && (
-        <div
-          className="pull-hint"
-          role="status"
-          style={{ transform: `translate(-50%, ${refreshing ? 8 : Math.round(pull * 0.35)}px)` }}
-        >
-          {refreshing ? "Refreshing…" : pull > 48 ? "Release to refresh" : "Pull to refresh"}
-        </div>
-      )}
-
+    <>
       <div className="home-top">
         {multiKid ? (
           <button
             type="button"
             className="kid-name-btn"
-            onClick={() => setPickerOpen(true)}
+            onClick={onOpenPicker}
             aria-haspopup="dialog"
-            aria-expanded={pickerOpen}
-            aria-label={`${kid.name}. Switch kid`}
+            aria-label={`${pageKid.name}. Switch kid`}
           >
-            <span className="kid-name-text">{kid.name}</span>
+            <span className="kid-name-text">{pageKid.name}</span>
             <span className="kid-chevron">
               <ChevronDown />
             </span>
           </button>
         ) : (
           <h1 className="kid-name-btn static">
-            <span className="kid-name-text">{kid.name}</span>
+            <span className="kid-name-text">{pageKid.name}</span>
           </h1>
         )}
 
@@ -265,8 +206,7 @@ export function Home({
           const noteLine = reversal
             ? reversalNoteLine(r, rows)
             : r.note.split("\n")[0] || ""
-          const signed =
-            r.type === "Deposit" ? r.amount : -r.amount
+          const signed = r.type === "Deposit" ? r.amount : -r.amount
           return (
             <div key={`${r.rowIndex}-${r.id}`}>
               {showHeader && (
@@ -308,6 +248,275 @@ export function Home({
           )
         })}
       </div>
+    </>
+  )
+}
+
+export function Home({
+  kid,
+  kids,
+  rows,
+  balance,
+  updatedAt,
+  online,
+  flashing,
+  onSelectKid,
+  onDeposit,
+  onExpense,
+  onOpenEntry,
+  onSettings,
+  onRefresh,
+}: Props) {
+  const touchY = useRef<number | null>(null)
+  const touchX = useRef<number | null>(null)
+  const axisLock = useRef<"none" | "h" | "v">("none")
+  const [pull, setPull] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerPushed = useRef(false)
+  const multiKid = kids.length > 1
+  const pagerRef = useRef<HTMLDivElement>(null)
+  const syncingScroll = useRef(false)
+  const scrollEndTimer = useRef<number | null>(null)
+  const activeIndex = Math.max(
+    0,
+    kids.findIndex((k) => k.kidId === kid.kidId),
+  )
+
+  useEffect(() => {
+    if (!pickerOpen) return
+    if (!pickerPushed.current) {
+      history.pushState({ fbKidPicker: true }, "")
+      pickerPushed.current = true
+    }
+    const onPop = () => {
+      pickerPushed.current = false
+      setPickerOpen(false)
+    }
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [pickerOpen])
+
+  const closePicker = useCallback(() => {
+    if (pickerPushed.current) {
+      history.back()
+    } else {
+      setPickerOpen(false)
+    }
+  }, [])
+
+  const nearestIndex = useCallback(() => {
+    const el = pagerRef.current
+    if (!el) return activeIndex
+    const pages = el.querySelectorAll<HTMLElement>(".home-page")
+    if (!pages.length) return activeIndex
+    let best = 0
+    let bestDist = Infinity
+    const left = el.scrollLeft
+    pages.forEach((p, i) => {
+      const dist = Math.abs(p.offsetLeft - left)
+      if (dist < bestDist) {
+        bestDist = dist
+        best = i
+      }
+    })
+    return best
+  }, [activeIndex])
+
+  const commitVisibleKid = useCallback(() => {
+    if (syncingScroll.current) return
+    const idx = nearestIndex()
+    const next = kids[idx]
+    if (next && next.kidId !== kid.kidId) {
+      onSelectKid(next.kidId)
+    }
+  }, [kids, kid.kidId, nearestIndex, onSelectKid])
+
+  // Snap pager to active kid when selection changes (picker / persistence)
+  useEffect(() => {
+    const el = pagerRef.current
+    if (!el || !multiKid) return
+    const page = el.querySelectorAll<HTMLElement>(".home-page")[activeIndex]
+    if (!page) return
+    const target = page.offsetLeft
+    if (Math.abs(el.scrollLeft - target) < 2) return
+    syncingScroll.current = true
+    el.scrollTo({
+      left: target,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    })
+    const done = () => {
+      syncingScroll.current = false
+    }
+    if (prefersReducedMotion()) {
+      done()
+      return
+    }
+    const t = window.setTimeout(done, 380)
+    return () => window.clearTimeout(t)
+  }, [kid.kidId, activeIndex, multiKid])
+
+  const onPagerScroll = useCallback(() => {
+    if (syncingScroll.current) return
+    if (scrollEndTimer.current != null) window.clearTimeout(scrollEndTimer.current)
+    scrollEndTimer.current = window.setTimeout(() => {
+      scrollEndTimer.current = null
+      commitVisibleKid()
+    }, 80)
+  }, [commitVisibleKid])
+
+  useEffect(() => {
+    const el = pagerRef.current
+    if (!el || !multiKid) return
+    const onScrollEnd = () => commitVisibleKid()
+    el.addEventListener("scrollend", onScrollEnd)
+    return () => el.removeEventListener("scrollend", onScrollEnd)
+  }, [multiKid, commitVisibleKid])
+
+  const resetGesture = () => {
+    touchY.current = null
+    touchX.current = null
+    axisLock.current = "none"
+  }
+
+  const onPageTouchStart = (e: TouchEvent) => {
+    if (pickerOpen) return
+    touchY.current = e.touches[0]?.clientY ?? null
+    touchX.current = e.touches[0]?.clientX ?? null
+    axisLock.current = "none"
+  }
+
+  const onPageTouchMove = (e: TouchEvent, pageEl: HTMLElement) => {
+    if (pickerOpen) return
+    const t = e.touches[0]
+    if (!t || touchY.current == null || touchX.current == null) return
+    const dx = t.clientX - touchX.current
+    const dy = t.clientY - touchY.current
+    if (axisLock.current === "none") {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+      axisLock.current =
+        Math.abs(dx) > Math.abs(dy) && multiKid ? "h" : "v"
+    }
+    if (axisLock.current === "h") {
+      // Pause pull-to-refresh while horizontal paging
+      setPull(0)
+      return
+    }
+    if (pageEl.scrollTop <= 0 && dy > 0) {
+      setPull(Math.min(72, dy * 0.4))
+    } else {
+      setPull(0)
+    }
+  }
+
+  const onPageTouchEnd = async () => {
+    if (pickerOpen) {
+      resetGesture()
+      return
+    }
+    const wasVertical = axisLock.current === "v"
+    const pullAmt = pull
+    resetGesture()
+    if (wasVertical && pullAmt > 48 && !refreshing) {
+      setRefreshing(true)
+      try {
+        await onRefresh()
+      } finally {
+        setRefreshing(false)
+      }
+    }
+    setPull(0)
+  }
+
+  return (
+    <div className={`home${multiKid ? " home-multi" : ""}`}>
+      {(pull > 0 || refreshing) && (
+        <div
+          className="pull-hint"
+          role="status"
+          style={{
+            transform: `translate(-50%, ${refreshing ? 8 : Math.round(pull * 0.35)}px)`,
+          }}
+        >
+          {refreshing
+            ? "Refreshing…"
+            : pull > 48
+              ? "Release to refresh"
+              : "Pull to refresh"}
+        </div>
+      )}
+
+      {multiKid ? (
+        <div
+          className="home-pager"
+          ref={pagerRef}
+          onScroll={onPagerScroll}
+          aria-label="Kids"
+        >
+          {kids.map((k) => {
+            const pageBalance = balanceForKid(rows, k.kidId)
+            const isActive = k.kidId === kid.kidId
+            return (
+              <div
+                key={k.kidId}
+                className="home-page"
+                data-kid-id={k.kidId}
+                aria-hidden={!isActive}
+                onTouchStart={onPageTouchStart}
+                onTouchMove={(e) =>
+                  onPageTouchMove(e, e.currentTarget)
+                }
+                onTouchEnd={() => void onPageTouchEnd()}
+                onTouchCancel={() => {
+                  resetGesture()
+                  setPull(0)
+                }}
+              >
+                <KidPageBody
+                  pageKid={k}
+                  rows={rows}
+                  balance={pageBalance}
+                  updatedAt={isActive ? updatedAt : null}
+                  online={online}
+                  flashing={isActive && flashing}
+                  multiKid={multiKid}
+                  onOpenPicker={() => setPickerOpen(true)}
+                  onDeposit={onDeposit}
+                  onExpense={onExpense}
+                  onOpenEntry={onOpenEntry}
+                  onSettings={onSettings}
+                />
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div
+          className="home-page home-page-solo"
+          onTouchStart={onPageTouchStart}
+          onTouchMove={(e) => onPageTouchMove(e, e.currentTarget)}
+          onTouchEnd={() => void onPageTouchEnd()}
+          onTouchCancel={() => {
+            resetGesture()
+            setPull(0)
+          }}
+        >
+          <KidPageBody
+            pageKid={kid}
+            rows={rows}
+            balance={balance}
+            updatedAt={updatedAt}
+            online={online}
+            flashing={flashing}
+            multiKid={false}
+            onOpenPicker={() => setPickerOpen(true)}
+            onDeposit={onDeposit}
+            onExpense={onExpense}
+            onOpenEntry={onOpenEntry}
+            onSettings={onSettings}
+          />
+        </div>
+      )}
 
       {pickerOpen && multiKid && (
         <div className="kid-picker-root" onClick={closePicker}>
@@ -334,7 +543,9 @@ export function Home({
                 >
                   <span className="kid-swatch" style={{ background: k.color }} />
                   <span className="kid-picker-name">{k.name}</span>
-                  <span className="kid-picker-check">{active && <CheckIcon />}</span>
+                  <span className="kid-picker-check">
+                    {active && <CheckIcon />}
+                  </span>
                 </button>
               )
             })}

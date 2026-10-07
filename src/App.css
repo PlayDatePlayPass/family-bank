@@ -356,10 +356,65 @@ textarea.field {
   max-width: 420px;
   margin: 0 auto;
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.home.home-multi {
+  width: 100%;
+}
+
+/* build 15: full-page horizontal kid pager with snap + edge peek */
+.home-pager {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  gap: 8px;
+  padding-right: 12px;
+  scrollbar-width: none;
+}
+
+.home-pager::-webkit-scrollbar {
+  display: none;
+}
+
+.home-page {
+  flex: 0 0 calc(100% - 12px);
+  width: calc(100% - 12px);
+  max-width: none;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  min-height: 100dvh;
   padding: max(0.75rem, env(safe-area-inset-top)) 1rem
     max(1.5rem, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
+}
+
+.home-page-solo {
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-pager {
+    scroll-behavior: auto;
+  }
 }
 
 .home-top {
@@ -525,6 +580,9 @@ textarea.field {
   .kid-picker-root,
   .kid-picker {
     animation: none;
+  }
+  .home-pager {
+    scroll-behavior: auto;
   }
 }
 
@@ -1038,4 +1096,22 @@ a.btn {
   .chip:active {
     transform: none !important;
   }
+}
+
+/* build 15: Settings bank title — uses --text (white on Bold, black on Bright) */
+.bank-title {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.force-refresh-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

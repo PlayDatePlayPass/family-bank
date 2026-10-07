@@ -208,15 +208,31 @@ export function oppositeType(t: TxType): TxType {
   return t === "Deposit" ? "Expense" : "Deposit"
 }
 
+/** Canonical deposit tag order for new + existing sheets (Gift Card added in Build 15). */
+export const DEFAULT_DEPOSIT_TAGS = [
+  "Cash",
+  "Pay Day",
+  "Gift",
+  "Gift Card",
+  "Other",
+] as const
+
 export function depositTags(tags: { type: string; tag: string }[]): string[] {
   const seen = new Set<string>()
   const out: string[] = []
+  // Defaults first, in locked order — inject Gift Card even if missing from sheet
+  for (const d of DEFAULT_DEPOSIT_TAGS) {
+    if (seen.has(d)) continue
+    seen.add(d)
+    out.push(d)
+  }
   for (const t of tags) {
     if (t.type !== "Deposit") continue
     if (t.tag === "Correction") continue
-    if (seen.has(t.tag)) continue
-    seen.add(t.tag)
-    out.push(t.tag)
+    const name = t.tag.trim()
+    if (!name || seen.has(name)) continue
+    seen.add(name)
+    out.push(name)
   }
   return out
 }
