@@ -940,31 +940,87 @@ textarea.field {
   gap: 0.5rem;
 }
 
-.kid-row {
+/* build 16: Settings kids + deposit tags share one list language */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0.75rem;
+}
+
+.settings-list-row-wrap {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.5rem 0;
+  gap: 0.35rem;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent);
 }
 
-.kid-row-meta {
-  flex: 1;
+.settings-list-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.settings-list-row-wrap > .settings-list-row {
+  border-bottom: none;
+  flex: 1;
   min-width: 0;
 }
 
-.kid-row-meta span {
-  font-size: 0.75rem;
+.settings-list-row-static {
+  cursor: default;
+}
+
+.settings-list-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.avatar-sq.settings-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.settings-row-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 400;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
   color: var(--muted);
+  opacity: 0.7;
+}
+
+.settings-fix-btn {
+  flex-shrink: 0;
+  padding: 0.35rem 0.4rem;
 }
 
 .kid-editor {
   margin: 0.5rem 0 1rem;
 }
 
-.tag-list,
 .issue-list {
   margin: 0 0 0.75rem;
   padding-left: 1.1rem;

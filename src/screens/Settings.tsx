@@ -22,6 +22,23 @@ type Props = {
   onFixKidId: (kid: Kid) => Promise<void>
 }
 
+function ChevronRight() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+      aria-hidden="true"
+    >
+      <path d="M6 3.5L10.5 8 6 12.5" />
+    </svg>
+  )
+}
+
 export function Settings({
   email,
   data,
@@ -50,69 +67,71 @@ export function Settings({
       <h1 className="bank-title">Slacter Family Bank</h1>
 
       <h3 className="section-title">Kids</h3>
-      {data.kids.map((k) => {
-        const editKey = k.kidId || `row-${k.rowIndex}`
-        return editing === editKey ? (
-          <KidEditor
-            key={k.kidId}
-            kid={k}
-            others={data.kids.filter((x) => x.kidId !== k.kidId).map((x) => x.name)}
-            busy={busy}
-            online={online}
-            onCancel={() => setEditing(null)}
-            onSave={async (fields) => {
-              setErr(null)
-              try {
-                await onUpdateKid(k, fields)
-                setEditing(null)
-              } catch (e) {
-                setErr(e instanceof Error ? e.message : "Save failed")
-              }
-            }}
-          />
-        ) : (
-          <div key={k.kidId} className="kid-row">
-            <div
-              className="avatar-sq sm filled"
-              style={{ background: k.color, borderColor: k.color }}
-            >
-              {(k.name[0] || "?").toUpperCase()}
-            </div>
-            <div className="kid-row-meta">
-              <strong>{k.name}</strong>
-              <span>
-                {k.theme} · {k.color}
-                {!k.kidId && " · missing ID"}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="text-btn"
-              disabled={!online}
-              onClick={() => setEditing(editKey)}
-            >
-              Edit
-            </button>
-            {!k.kidId && (
+      <div className="settings-list">
+        {data.kids.map((k) => {
+          const editKey = k.kidId || `row-${k.rowIndex}`
+          return editing === editKey ? (
+            <KidEditor
+              key={k.kidId}
+              kid={k}
+              others={data.kids.filter((x) => x.kidId !== k.kidId).map((x) => x.name)}
+              busy={busy}
+              online={online}
+              onCancel={() => setEditing(null)}
+              onSave={async (fields) => {
+                setErr(null)
+                try {
+                  await onUpdateKid(k, fields)
+                  setEditing(null)
+                } catch (e) {
+                  setErr(e instanceof Error ? e.message : "Save failed")
+                }
+              }}
+            />
+          ) : (
+            <div key={k.kidId} className="settings-list-row-wrap">
               <button
                 type="button"
-                className="text-btn"
-                disabled={!online || busy}
-                onClick={() => onFixKidId(k)}
+                className="settings-list-row"
+                disabled={!online}
+                onClick={() => setEditing(editKey)}
+                aria-label={`Edit ${k.name}`}
               >
-                Fix
+                <span
+                  className="avatar-sq settings-avatar filled"
+                  style={{ background: k.color, borderColor: k.color }}
+                  aria-hidden="true"
+                >
+                  {(k.name[0] || "?").toUpperCase()}
+                </span>
+                <span className="settings-row-name">{k.name}</span>
+                <span className="settings-chevron" aria-hidden="true">
+                  <ChevronRight />
+                </span>
               </button>
-            )}
-          </div>
-        )
-      })}
+              {!k.kidId && (
+                <button
+                  type="button"
+                  className="text-btn settings-fix-btn"
+                  disabled={!online || busy}
+                  onClick={() => onFixKidId(k)}
+                >
+                  Fix
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
       <h3 className="section-title">Deposit tags</h3>
-      <ul className="tag-list">
+      <div className="settings-list">
         {tagList.map((t) => (
-          <li key={t}>{t}</li>
+          <div key={t} className="settings-list-row settings-list-row-static">
+            <span className="settings-row-name">{t}</span>
+          </div>
         ))}
-      </ul>
+      </div>
       <div className="row-input">
         <input
           className="field"
@@ -167,7 +186,7 @@ export function Settings({
       </a>
 
       {err && <p className="err-msg">{err}</p>}
-      <p className="foot">Build 15</p>
+      <p className="foot">Build 16</p>
     </div>
   )
 }

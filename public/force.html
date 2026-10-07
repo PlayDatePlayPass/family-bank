@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>Family Bank · refresh to build 15</title>
+    <title>Family Bank · refresh to build 16</title>
     <style>
       body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 28rem; margin: auto; line-height: 1.4; }
       a { font-size: 1.25rem; }
@@ -13,7 +13,7 @@
   <body>
     <p>Clearing old Family Bank cache…</p>
     <p id="status">Working</p>
-    <p><a id="go" href="./?v=15">Open Build 15</a></p>
+    <p><a id="go" href="./?v=16">Open Build 16</a></p>
     <script>
       (async () => {
         const status = document.getElementById("status")
@@ -31,7 +31,7 @@
         } catch (e) {
           status.textContent = "Partial clear: " + (e && e.message ? e.message : e)
         }
-        location.replace("./?v=15&fresh=" + Date.now())
+        location.replace("./?v=16&fresh=" + Date.now())
       })()
     </script>
   </body>

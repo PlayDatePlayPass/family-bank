@@ -17,7 +17,7 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 )
 
-const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=15`
+const SW_URL = `${import.meta.env.BASE_URL}sw.js?v=16`
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
