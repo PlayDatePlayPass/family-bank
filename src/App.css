@@ -355,7 +355,9 @@ textarea.field {
 .home {
   max-width: 420px;
   margin: 0 auto;
-  min-height: 100dvh;
+  /* build 18: fixed viewport height so the kid page (not the body) is the scroller */
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -369,8 +371,9 @@ textarea.field {
 .home-pager {
   display: flex;
   flex-direction: row;
-  flex: 1;
-  min-height: 100dvh;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -396,8 +399,11 @@ textarea.field {
   scroll-snap-stop: always;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  min-height: 100dvh;
+  touch-action: pan-x pan-y;
+  height: 100%;
+  min-height: 0;
   padding: max(0.75rem, env(safe-area-inset-top)) 1rem
     max(1.5rem, env(safe-area-inset-bottom));
   display: flex;
@@ -405,7 +411,7 @@ textarea.field {
 }
 
 .home-page-solo {
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
