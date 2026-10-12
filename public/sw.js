@@ -1,5 +1,5 @@
-/* family-bank build 18 */
-const BUILD = 18
+/* family-bank build 19 */
+const BUILD = 19
 const FONT_CACHE = `fb-fonts-${BUILD}`
 
 self.addEventListener("install", (e) => {

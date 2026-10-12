@@ -397,15 +397,12 @@ textarea.field {
   box-sizing: border-box;
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  /* build 19: page is fixed; only .ledger scrolls */
+  overflow: hidden;
   touch-action: pan-x pan-y;
   height: 100%;
   min-height: 0;
-  padding: max(0.75rem, env(safe-area-inset-top)) 1rem
-    max(1.5rem, env(safe-area-inset-bottom));
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0;
   display: flex;
   flex-direction: column;
 }
@@ -719,8 +716,21 @@ textarea.field {
   opacity: 0.4;
 }
 
+.home-top,
+.balance-frame,
+.actions {
+  flex: none;
+}
+
 .ledger {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: auto; /* let horizontal swipes chain to the kid pager */
+  overscroll-behavior-y: contain;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   border-top: var(--line-w) solid var(--line);
 }
 

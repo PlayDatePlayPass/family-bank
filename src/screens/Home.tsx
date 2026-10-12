@@ -402,7 +402,8 @@ export function Home({
       setPull(0)
       return
     }
-    if (pageEl.scrollTop <= 0 && dy > 0) {
+    const list = pageEl.querySelector<HTMLElement>(".ledger")
+    if ((list ? list.scrollTop : pageEl.scrollTop) <= 0 && dy > 0) {
       setPull(Math.min(72, dy * 0.4))
     } else {
       setPull(0)
